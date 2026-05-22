@@ -1,6 +1,6 @@
 HOST ?= 0.0.0.0
 PORT ?= 7860
-DEVICE ?= auto
+DEVICE ?= cuda
 
 PID_FILE := .chatterbox-server.pid
 LOG_FILE := .chatterbox-server.log

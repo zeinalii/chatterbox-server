@@ -1,3 +1,11 @@
 #!/usr/bin/env sh
 DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-exec "$DIR/.venv-chatterbox-turbo/bin/python" "$DIR/chatterbox_cli.py" "$@"
+if [ -x "$DIR/.venv-chatterbox/bin/python" ]; then
+    exec "$DIR/.venv-chatterbox/bin/python" "$DIR/chatterbox_cli.py" "$@"
+fi
+for PYTHON in "$DIR"/.venv-chatterbox*/bin/python; do
+    if [ -x "$PYTHON" ]; then
+        exec "$PYTHON" "$DIR/chatterbox_cli.py" "$@"
+    fi
+done
+exec python3 "$DIR/chatterbox_cli.py" "$@"

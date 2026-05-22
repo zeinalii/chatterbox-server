@@ -1,10 +1,11 @@
 # Audiolab Chatterbox
 
-Small CLI for generating speech from text files with Chatterbox Turbo.
+Small CLI for generating speech from text files with Chatterbox.
 
 ## Requirements
 
 - Python 3.11
+- NVIDIA GPU with a working CUDA driver by default
 - `ffmpeg` for MP3 output
 - Network access on first install and first model download
 
@@ -13,9 +14,9 @@ Small CLI for generating speech from text files with Chatterbox Turbo.
 From this directory:
 
 ```bash
-python3.11 -m venv .venv-chatterbox-turbo
-.venv-chatterbox-turbo/bin/python -m pip install --upgrade pip
-.venv-chatterbox-turbo/bin/python -m pip install chatterbox-tts
+python3.11 -m venv .venv-chatterbox
+.venv-chatterbox/bin/python -m pip install --upgrade pip
+.venv-chatterbox/bin/python -m pip install chatterbox-tts
 chmod +x chatterbox
 ```
 
@@ -27,10 +28,10 @@ The model is downloaded automatically the first time you run the CLI:
 ./chatterbox input.txt --out audio.wav
 ```
 
-Chatterbox Turbo downloads weights from Hugging Face:
+Chatterbox downloads weights from Hugging Face:
 
 ```text
-ResembleAI/chatterbox-turbo
+ResembleAI/chatterbox
 ```
 
 If you want to prefetch the model without generating a real audio file, create a tiny text file and run:
@@ -83,7 +84,7 @@ Start a warm Chatterbox server on this machine:
 make up
 ```
 
-By default it listens on `0.0.0.0:7860`. Override the bind address, port, or device when needed:
+By default it listens on `0.0.0.0:7860` and uses CUDA. Override the bind address, port, or device when needed:
 
 ```bash
 make up HOST=0.0.0.0 PORT=9000 DEVICE=cuda

@@ -34,38 +34,34 @@ class Settings:
     text_file: Path
     out: Path
     config: Path | None = None
-    device: str = "auto"
+    device: str = "cuda"
     chunk_chars: int = 260
     pause_seconds: float = 0.35
     seed: int | None = None
     audio_prompt_path: Path | None = None
     repetition_penalty: float = 1.2
-    min_p: float = 0.0
-    top_p: float = 0.95
-    exaggeration: float = 0.0
-    cfg_weight: float = 0.0
+    min_p: float = 0.05
+    top_p: float = 1.0
+    exaggeration: float = 0.5
+    cfg_weight: float = 0.5
     temperature: float = 0.8
-    top_k: int = 1000
-    norm_loudness: bool = True
     overwrite: bool = True
     quiet: bool = False
 
 
 DEFAULTS: dict[str, Any] = {
     "out": "audio.wav",
-    "device": "auto",
+    "device": "cuda",
     "chunk_chars": 260,
     "pause_seconds": 0.35,
     "seed": None,
     "audio_prompt_path": None,
     "repetition_penalty": 1.2,
-    "min_p": 0.0,
-    "top_p": 0.95,
-    "exaggeration": 0.0,
-    "cfg_weight": 0.0,
+    "min_p": 0.05,
+    "top_p": 1.0,
+    "exaggeration": 0.5,
+    "cfg_weight": 0.5,
     "temperature": 0.8,
-    "top_k": 1000,
-    "norm_loudness": True,
     "overwrite": True,
     "quiet": False,
 }
@@ -75,8 +71,8 @@ CONFIG_TEMPLATE = """[chatterbox]
 # Output path. Supported suffixes: .wav, .mp3
 out = audio.wav
 
-# Device: auto, cpu, cuda, or mps
-device = auto
+# Device: cuda, auto, cpu, or mps
+device = cuda
 
 # Long text is split at sentence boundaries before synthesis.
 chunk_chars = 260
@@ -88,15 +84,13 @@ seed =
 # Optional 5+ second reference voice clip for voice cloning.
 audio_prompt_path =
 
-# Chatterbox Turbo generation parameters.
+# Chatterbox generation parameters.
 repetition_penalty = 1.2
-min_p = 0.0
-top_p = 0.95
-exaggeration = 0.0
-cfg_weight = 0.0
+min_p = 0.05
+top_p = 1.0
+exaggeration = 0.5
+cfg_weight = 0.5
 temperature = 0.8
-top_k = 1000
-norm_loudness = true
 
 overwrite = true
 quiet = false
@@ -140,7 +134,7 @@ def coerce_value(key: str, value: Any) -> Any:
         return None if key in {"seed", "audio_prompt_path", "config"} else value
     if key in {"text_file", "out", "config", "audio_prompt_path"}:
         return Path(value)
-    if key in {"chunk_chars", "top_k", "seed"}:
+    if key in {"chunk_chars", "seed"}:
         return int(value)
     if key in {
         "pause_seconds",
@@ -152,7 +146,7 @@ def coerce_value(key: str, value: Any) -> Any:
         "temperature",
     }:
         return float(value)
-    if key in {"norm_loudness", "overwrite", "quiet"}:
+    if key in {"overwrite", "quiet"}:
         return parse_bool(value)
     return value
 
@@ -164,7 +158,7 @@ def coerce_values(values: dict[str, Any]) -> dict[str, Any]:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="chatterbox",
-        description="Generate speech from a text file with Chatterbox Turbo.",
+        description="Generate speech from a text file with Chatterbox.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("text_file", nargs="?", type=Path, help="Text file to synthesize.")
@@ -187,8 +181,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--exaggeration", type=float)
     parser.add_argument("--cfg-weight", type=float)
     parser.add_argument("--temperature", type=float)
-    parser.add_argument("--top-k", type=int)
-    parser.add_argument("--norm-loudness", type=parse_bool)
     parser.add_argument("--overwrite", dest="overwrite", action="store_true", help="Overwrite existing output.")
     parser.add_argument("--no-overwrite", dest="overwrite", action="store_false", help="Refuse to overwrite existing output.")
     parser.add_argument("--quiet", action="store_true", help="Only print the final output path.")
@@ -323,10 +315,10 @@ def write_default_config(path: Path) -> None:
 
 def load_model(device_name: str) -> tuple[Any, Any]:
     import torch
-    from chatterbox.tts_turbo import ChatterboxTurboTTS
+    from chatterbox.tts import ChatterboxTTS
 
     device = resolve_device(device_name)
-    model = ChatterboxTurboTTS.from_pretrained(device=device)
+    model = ChatterboxTTS.from_pretrained(device=device)
     default_conds = copy.deepcopy(model.conds)
     return model, default_conds
 
@@ -344,7 +336,6 @@ def generate_wav(settings: Settings, text: str, model: Any, default_conds: Any) 
         model.prepare_conditionals(
             settings.audio_prompt_path,
             exaggeration=settings.exaggeration,
-            norm_loudness=settings.norm_loudness,
         )
     elif default_conds is not None:
         model.conds = copy.deepcopy(default_conds)
@@ -364,8 +355,6 @@ def generate_wav(settings: Settings, text: str, model: Any, default_conds: Any) 
                 exaggeration=settings.exaggeration,
                 cfg_weight=settings.cfg_weight,
                 temperature=settings.temperature,
-                top_k=settings.top_k,
-                norm_loudness=settings.norm_loudness,
             )
         )
         if index < len(chunks) and settings.pause_seconds > 0:
@@ -379,7 +368,7 @@ def run(settings: Settings) -> Path:
     validate(settings)
 
     device = resolve_device(settings.device)
-    log(settings, f"Loading Chatterbox Turbo on {device}")
+    log(settings, f"Loading Chatterbox on {device}")
     model, default_conds = load_model(device)
     wav, sample_rate = generate_wav(
         settings,
@@ -415,8 +404,6 @@ def remote_payload(settings: Settings) -> dict[str, Any]:
             "exaggeration": settings.exaggeration,
             "cfg_weight": settings.cfg_weight,
             "temperature": settings.temperature,
-            "top_k": settings.top_k,
-            "norm_loudness": settings.norm_loudness,
             "quiet": settings.quiet,
         },
     }
@@ -459,7 +446,7 @@ class ChatterboxServer:
         import threading
 
         self.device = resolve_device(device)
-        print(f"Loading Chatterbox Turbo on {self.device}", file=sys.stderr)
+        print(f"Loading Chatterbox on {self.device}", file=sys.stderr)
         self.model, self.default_conds = load_model(self.device)
         self.lock = threading.Lock()
 
