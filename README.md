@@ -36,8 +36,9 @@ ResembleAI/chatterbox-turbo
 If you want to prefetch the model without generating a real audio file, create a tiny text file and run:
 
 ```bash
-printf 'Test.' > /tmp/chatterbox-download-test.txt
-./chatterbox /tmp/chatterbox-download-test.txt --out /tmp/chatterbox-download-test.wav
+mkdir -p .chatterbox-tmp
+printf 'Test.' > .chatterbox-tmp/download-test.txt
+./chatterbox .chatterbox-tmp/download-test.txt --out .chatterbox-tmp/download-test.wav
 ```
 
 After the first successful run, the model should be available from the local Hugging Face cache.
@@ -97,7 +98,7 @@ make down
 From another device with this repo installed, send work to the server:
 
 ```bash
-./chatterbox story.txt --url 192.168.1.20:7860 --out audio.wav
+./chatterbox story.txt --url HOST_OR_IP:7860 --out audio.wav
 ```
 
 The client reads the local text file, sends it and the generation settings to the server, then writes the returned audio to `--out` on the client device.

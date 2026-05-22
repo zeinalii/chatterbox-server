@@ -170,7 +170,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("text_file", nargs="?", type=Path, help="Text file to synthesize.")
     parser.add_argument("--out", type=Path, help="Output path. Supported suffixes: .wav, .mp3.")
     parser.add_argument("--config", type=Path, help=f"Optional config file, for example {DEFAULT_CONFIG_NAME}.")
-    parser.add_argument("--url", help="Remote Chatterbox server URL, for example 192.168.1.20:7860.")
+    parser.add_argument("--url", help="Remote Chatterbox server URL, for example HOST_OR_IP:7860.")
     parser.add_argument("--serve", action="store_true", help="Run a Chatterbox HTTP server.")
     parser.add_argument("--host", default=SERVER_DEFAULT_HOST, help="Server host for --serve.")
     parser.add_argument("--port", type=int, default=SERVER_DEFAULT_PORT, help="Server port for --serve.")
