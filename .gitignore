@@ -1,0 +1,21 @@
+.venv-chatterbox-turbo/
+__pycache__/
+*.py[cod]
+
+# Generated audio
+*.wav
+*.mp3
+*.flac
+*.ogg
+
+# Local model/cache data
+.cache/
+huggingface/
+models/
+
+# Local user configs
+*.local.conf
+
+# Local server state
+.chatterbox-server.pid
+.chatterbox-server.log
